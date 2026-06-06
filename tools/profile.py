@@ -88,6 +88,7 @@ examples = """examples:
     ./profile -L 185      # only profile thread with TID 185
     ./profile -U          # only show user space stacks (no kernel)
     ./profile -K          # only show kernel space stacks (no user)
+    ./profile --dwarf -U  # unwind user stacks with DWARF CFI
     ./profile --cgroupmap mappath  # only trace cgroups in this BPF map
     ./profile --mntnsmap mappath   # only trace mount namespaces in the map
 """
