@@ -32,6 +32,9 @@ add_executable(test_dwarf_unwind
 	test_libbcc.cc
 	test_dwarf_unwind.cc)
 add_dependencies(test_dwarf_unwind bcc-shared)
+if(ENABLE_DWARF_UNWINDER AND LIBGUNWINDER_FOUND)
+  target_compile_definitions(test_dwarf_unwind PRIVATE HAVE_LIBGUNWINDER)
+endif()
 target_link_libraries(test_dwarf_unwind ${PROJECT_BINARY_DIR}/src/cc/libbcc.so)
 set_target_properties(test_dwarf_unwind PROPERTIES INSTALL_RPATH ${PROJECT_BINARY_DIR}/src/cc)
 

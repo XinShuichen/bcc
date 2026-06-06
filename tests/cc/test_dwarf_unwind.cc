@@ -9,7 +9,7 @@
 #include "bcc_dwarf_unwind.h"
 #include "catch.hpp"
 
-TEST_CASE("DWARF unwind ABI reports unsupported default behavior",
+TEST_CASE("DWARF unwind ABI reports build-time support state",
           "[dwarf_unwind]") {
   struct bcc_dwarf_unwind_context *ctx = nullptr;
   struct bcc_dwarf_unwind_result *result =

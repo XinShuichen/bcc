@@ -9,7 +9,17 @@
 #include <errno.h>
 #include <new>
 
-struct bcc_dwarf_unwind_context {};
+#ifdef HAVE_LIBGUNWINDER
+extern "C" {
+#include "gunwinder/unwinder.h"
+}
+#endif
+
+struct bcc_dwarf_unwind_context {
+#ifdef HAVE_LIBGUNWINDER
+  struct gu_context *gu_ctx;
+#endif
+};
 struct bcc_dwarf_unwind_result {};
 
 namespace {
@@ -37,14 +47,31 @@ int bcc_dwarf_unwind_context_new(
   if (options != nullptr && options->size < sizeof(*options))
     return set_errno_return(EINVAL);
 
-  *context = new (std::nothrow) bcc_dwarf_unwind_context();
-  if (*context == nullptr)
+  struct bcc_dwarf_unwind_context *new_context =
+      new (std::nothrow) bcc_dwarf_unwind_context();
+  if (new_context == nullptr)
     return set_errno_return(ENOMEM);
 
+#ifdef HAVE_LIBGUNWINDER
+  struct gu_init_cfg cfg = {};
+  new_context->gu_ctx = gu_init(&cfg);
+  if (new_context->gu_ctx == nullptr) {
+    delete new_context;
+    return set_errno_return(errno != 0 ? errno : ENOMEM);
+  }
+#endif
+
+  *context = new_context;
   return 0;
 }
 
 void bcc_dwarf_unwind_context_free(struct bcc_dwarf_unwind_context *context) {
+  if (context == nullptr)
+    return;
+
+#ifdef HAVE_LIBGUNWINDER
+  gu_cleanup(context->gu_ctx);
+#endif
   delete context;
 }
 
