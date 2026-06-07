@@ -28,6 +28,12 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: Set docker image name
+      id: image
+      shell: bash
+      run: |
+        echo "name=${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+
     # Login against registry except on PR
     # https://github.com/docker/login-action
     - name: Log into registry ${{ inputs.registry }}
@@ -48,5 +54,4 @@ runs:
           SHORTNAME=${{ inputs.os_nick }}
           LLVM_VERSION=${{ inputs.llvm_versions }}
         file: docker/build/Dockerfile.${{ inputs.os_distro }}
-        tags: ${{ inputs.registry }}/${{ github.repository }}:${{ inputs.os_distro }}-${{ inputs.os_version }}
-
+        tags: ${{ inputs.registry }}/${{ steps.image.outputs.name }}:${{ inputs.os_distro }}-${{ inputs.os_version }}

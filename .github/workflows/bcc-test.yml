@@ -9,8 +9,6 @@ on:
 env:
   # Use docker.io for Docker Hub if empty
   REGISTRY: ghcr.io
-  # github.repository as <account>/<repo>
-  IMAGE_NAME: ${{ github.repository }}
 
 permissions:
   contents: read # to fetch code (actions/checkout)
@@ -45,10 +43,14 @@ jobs:
       run: |
         uname -a
         ip addr
+    - name: Set docker image name
+      id: image
+      run: |
+        echo "name=${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
     - name: Pull docker container
       if: steps.changes.outputs.docker == 'false'
       run: |
-        docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ matrix.os.distro }}-${{ matrix.os.version }}
+        docker pull ${{ env.REGISTRY }}/${{ steps.image.outputs.name }}:${{ matrix.os.distro }}-${{ matrix.os.version }}
     - name: Build docker container
       if: steps.changes.outputs.docker == 'true'
       uses: ./.github/actions/build-container
@@ -59,7 +61,7 @@ jobs:
         llvm_versions: ${{ matrix.llvm_version }}
     - name: Tag docker container
       run: |
-        docker tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ matrix.os.distro }}-${{ matrix.os.version }} bcc-docker
+        docker tag ${{ env.REGISTRY }}/${{ steps.image.outputs.name }}:${{ matrix.os.distro }}-${{ matrix.os.version }} bcc-docker
     - name: Run bcc build - llvm-${{ matrix.llvm_version }}
       env: ${{ matrix.env }}
       run: |
@@ -148,10 +150,14 @@ jobs:
       run: |
         uname -a
         ip addr
+    - name: Set docker image name
+      id: image
+      run: |
+        echo "name=${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
     - name: Pull docker container
       if: steps.changes.outputs.docker == 'false'
       run: |
-        docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ matrix.os.distro }}-${{ matrix.os.version }}
+        docker pull ${{ env.REGISTRY }}/${{ steps.image.outputs.name }}:${{ matrix.os.distro }}-${{ matrix.os.version }}
     - name: Build docker container
       if: steps.changes.outputs.docker == 'true'
       uses: ./.github/actions/build-container
@@ -161,7 +167,7 @@ jobs:
         os_nick: ${{ matrix.os.nick }}
     - name: Tag docker container
       run: |
-        docker tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ matrix.os.distro }}-${{ matrix.os.version }} bcc-docker
+        docker tag ${{ env.REGISTRY }}/${{ steps.image.outputs.name }}:${{ matrix.os.distro }}-${{ matrix.os.version }} bcc-docker
     - name: Run bcc build
       env: ${{ matrix.env }}
       run: |
