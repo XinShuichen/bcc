@@ -46,6 +46,7 @@ jobs:
           libdw-dev \
           libelf-dev \
           libfl-dev \
+          libiberty-dev \
           libssl-dev \
           llvm-15-dev \
           pkg-config \
