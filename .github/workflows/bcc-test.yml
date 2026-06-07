@@ -48,11 +48,13 @@ jobs:
       run: |
         echo "name=${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
     - name: Pull docker container
+      id: pull
       if: steps.changes.outputs.docker == 'false'
+      continue-on-error: true
       run: |
         docker pull ${{ env.REGISTRY }}/${{ steps.image.outputs.name }}:${{ matrix.os.distro }}-${{ matrix.os.version }}
     - name: Build docker container
-      if: steps.changes.outputs.docker == 'true'
+      if: steps.changes.outputs.docker == 'true' || steps.pull.outcome == 'failure'
       uses: ./.github/actions/build-container
       with:
         os_distro: ${{ matrix.os.distro }}
@@ -155,11 +157,13 @@ jobs:
       run: |
         echo "name=${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
     - name: Pull docker container
+      id: pull
       if: steps.changes.outputs.docker == 'false'
+      continue-on-error: true
       run: |
         docker pull ${{ env.REGISTRY }}/${{ steps.image.outputs.name }}:${{ matrix.os.distro }}-${{ matrix.os.version }}
     - name: Build docker container
-      if: steps.changes.outputs.docker == 'true'
+      if: steps.changes.outputs.docker == 'true' || steps.pull.outcome == 'failure'
       uses: ./.github/actions/build-container
       with:
         os_distro: ${{ matrix.os.distro }}
