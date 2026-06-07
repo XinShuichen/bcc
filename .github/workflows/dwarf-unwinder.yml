@@ -1,0 +1,89 @@
+name: DWARF unwinder build
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+      - 'bcc-dwarf*'
+
+permissions:
+  contents: read
+
+jobs:
+  dwarf_unwinder:
+    name: Build with libgunwinder
+    runs-on: ubuntu-24.04
+    env:
+      LIBGUNWINDER_PREFIX: ${{ github.workspace }}/libgunwinder-install
+      LLVM_ROOT: /usr/lib/llvm-15
+      PKG_CONFIG_PATH: ${{ github.workspace }}/libgunwinder-install/lib/pkgconfig
+
+    steps:
+    - name: Checkout BCC
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Checkout libgunwinder
+      uses: actions/checkout@v4
+      with:
+        repository: volcengine/libgunwinder
+        ref: bcc-libgunwinder-08af0b6
+        path: libgunwinder
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y --no-install-recommends \
+          bison \
+          build-essential \
+          clang-15 \
+          cmake \
+          flex \
+          libclang-15-dev \
+          libdw-dev \
+          libelf-dev \
+          libfl-dev \
+          libssl-dev \
+          llvm-15-dev \
+          pkg-config \
+          python3-dev \
+          python3-pytest \
+          python3-setuptools \
+          zlib1g-dev
+
+    - name: Build and install libgunwinder
+      run: |
+        make -C libgunwinder -j"$(nproc)"
+        make -C libgunwinder install PREFIX="$LIBGUNWINDER_PREFIX"
+
+    - name: Configure BCC
+      run: |
+        cmake -S . -B build \
+          -DCMAKE_BUILD_TYPE=Debug \
+          -DENABLE_DWARF_UNWINDER=ON \
+          -DENABLE_LLVM_SHARED=ON
+
+    - name: Build DWARF tests
+      run: |
+        cmake --build build --target test_dwarf_unwind -j"$(nproc)"
+
+    - name: Run DWARF C++ test
+      run: |
+        ctest --test-dir build \
+          -R '^test_dwarf_unwind$' \
+          --output-on-failure
+
+    - name: Run DWARF Python test
+      run: |
+        ctest --test-dir build \
+          -R '^py_test_dwarf_unwind$' \
+          --output-on-failure
+
+    - name: Compile Python entry points
+      run: |
+        python3 -m py_compile \
+          tools/profile.py \
+          src/python/bcc/dwarf.py \
+          src/python/bcc/libbcc.py
